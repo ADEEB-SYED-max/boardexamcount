@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Board Exam Countdown</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: var(--bg-color, linear-gradient(135deg, #1e90ff, #87ceeb));
+            color: #333;
+        }
+
+        .container {
+            display: flex;
+            background: var(--timer-bg-color, #ffffff);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            overflow: hidden;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .current-time {
+            background-color: #004080;
+            color: white;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            text-align: center;
+            min-width: 200px;
+        }
+
+        .timer {
+            padding: 20px;
+            text-align: center;
+            flex: 1;
+        }
+
+        .timer h1 {
+            margin: 0 0 10px;
+            font-size: 2.5rem;
+            color: #004080;
+        }
+
+        .timer p {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+        }
+
+        .timer input {
+            padding: 10px;
+            font-size: 1rem;
+            margin-top: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .timer input:focus {
+            border-color: #1e90ff;
+            outline: none;
+        }
+
+        .countdown {
+            font-size: 2rem;
+            color: #004080;
+            margin-top: 20px;
+        }
+
+        .footer {
+            margin-top: 20px;
+            font-size: 1rem;
+            color: #ffffff;
+        }
+
+        .color-picker {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .color-picker label {
+            font-size: 0.9rem;
+        }
+
+        .color-picker input {
+            border: none;
+            cursor: pointer;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .modal button {
+            background-color: #004080;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .modal button:hover {
+            background-color: #1e90ff;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="current-time" id="currentTime">
+        <!-- Current time will be displayed here -->
+    </div>
+    <div class="timer">
+        <h1>Board Exam Countdown</h1>
+        <p id="daysCounter">Enter the board exam date below:</p>
+        <input type="date" id="targetDate" />
+        <div class="countdown" id="countdown"></div>
+        <div class="color-picker">
+            <label for="bgColor">Background:</label>
+            <input type="color" id="bgColor">
+            <label for="timerBgColor">Countdown:</label>
+            <input type="color" id="timerBgColor">
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Countdown Alert -->
+<div class="modal" id="modal">
+    <div class="modal-content">
+        <h2>You have a board exam countdown!</h2>
+        <p id="modalMessage"></p>
+        <button onclick="closeModal()">Close</button>
+    </div>
+</div>
+
+<div class="footer">Developed by Next_Toppers_Edition</div>
+
+<script>
+    // Function to update the current time every second
+    function updateCurrentTime() {
+        const now = new Date();
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+        document.getElementById('currentTime').innerText = now.toLocaleString('en-US', options);
+    }
+
+    setInterval(updateCurrentTime, 1000);
+    updateCurrentTime(); // Initial call
+
+    // Function to calculate and display total hours, minutes, and seconds left
+    const targetDateInput = document.getElementById('targetDate');
+    const daysCounter = document.getElementById('daysCounter');
+    const countdown = document.getElementById('countdown');
+    const modal = document.getElementById('modal');
+    const modalMessage = document.getElementById('modalMessage');
+
+    function updateCountdown() {
+        const targetDate = new Date(localStorage.getItem('boardExamDate'));
+        const now = new Date();
+
+        if (isNaN(targetDate)) {
+            daysCounter.innerText = "Please enter a valid date.";
+            countdown.innerText = "";
+            return;
+        }
+
+        const timeDifference = targetDate - now;
+        const totalSecondsLeft = Math.floor(timeDifference / 1000);
+        const totalMinutesLeft = Math.floor(totalSecondsLeft / 60);
+        const totalHoursLeft = Math.floor(totalMinutesLeft / 60);
+        const daysLeft = Math.floor(totalHoursLeft / 24);
+        const hoursLeft = totalHoursLeft % 24;
+        const minutesLeft = totalMinutesLeft % 60;
+        const secondsLeft = totalSecondsLeft % 60;
+
+        if (timeDifference > 0) {
+            daysCounter.innerText = `${daysLeft} day(s) left until your board exam on ${targetDate.toDateString()}.`;
+            countdown.innerText = `${totalHoursLeft} hours, ${minutesLeft} minutes, and ${secondsLeft} seconds remaining.`;
+        } else if (timeDifference === 0) {
+            daysCounter.innerText = `Today is your board exam day: ${targetDate.toDateString()}! Best of luck!`;
+            countdown.innerText = "The time has come!";
+        } else {
+            daysCounter.innerText = `${Math.abs(daysLeft)} day(s) have passed since your board exam on ${targetDate.toDateString()}.`;
+            countdown.innerText = "The exam date has passed.";
+        }
+    }
+
+    function loadSavedDate() {
+        const savedDate = localStorage.getItem('boardExamDate');
+        if (savedDate) {
+            targetDateInput.value = savedDate;
+            updateCountdown();
+            setInterval(updateCountdown, 1000);
+        }
+    }
+
+    targetDateInput.addEventListener('change', () => {
+        const selectedDate = targetDateInput.value;
+        if (selectedDate) {
+            localStorage.setItem('boardExamDate', selectedDate);
+            updateCountdown();
+        }
+    });
+
+    loadSavedDate(); // Load saved date on page load
+
+    // Function to show the countdown in the modal once a day when closing the website
+    window.addEventListener('beforeunload', (event) => {
+        const targetDate = new Date(localStorage.getItem('boardExamDate'));
+        const now = new Date();
+
+        if (!isNaN(targetDate)) {
+            const timeDifference = targetDate - now;
+            const daysLeft = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
+
+            // Check if we should show the popup (once per day)
+            const lastPopupDate = localStorage.getItem('lastPopupDate');
+            const today = new Date().toISOString().split('T')[0];
+
+            if (lastPopupDate !== today && timeDifference > 0) {
+                modalMessage.innerText = `You have ${daysLeft} day(s) left until your board exam! Keep preparing!`;
+                modal.style.display = "flex"; // Show the modal
+                localStorage.setItem('lastPopupDate', today);
+            }
+        }
+    });
+
+    function closeModal() {
+        modal.style.display = "none"; // Close the modal
+    }
+
+    // Color customization functionality
+    const bgColorPicker = document.getElementById('bgColor');
+    const timerBgColorPicker = document.getElementById('timerBgColor');
+
+    function loadCustomColors() {
+        const savedBgColor = localStorage.getItem('bgColor');
+        const savedTimerBgColor = localStorage.getItem('timerBgColor');
+
+        if (savedBgColor) {
+            document.documentElement.style.setProperty('--bg-color', savedBgColor);
+            bgColorPicker.value = savedBgColor;
+        }
+
+        if (savedTimerBgColor) {
+            document.documentElement.style.setProperty('--timer-bg-color', savedTimerBgColor);
+            timerBgColorPicker.value = savedTimerBgColor;
+        }
+    }
+
+    bgColorPicker.addEventListener('input', () => {
+        const color = bgColorPicker.value;
+        document.documentElement.style.setProperty('--bg-color', color);
+        localStorage.setItem('bgColor', color);
+    });
+
+    timerBgColorPicker.addEventListener('input', () => {
+        const color = timerBgColorPicker.value;
+        document.documentElement.style.setProperty('--timer-bg-color', color);
+        localStorage.setItem('timerBgColor', color);
+    });
+
+    loadCustomColors();
+</script>
+
+</body>
+</html>
